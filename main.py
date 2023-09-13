@@ -3,83 +3,56 @@ from sjapi import SuperJobAPI
 from vacancy import JSONVacancyStorage, Vacancy
 
 
-def interact():
-    hh_client_id = 'I88OP6RS2118MDVUKBI6K8CMLEGGSSFMQA5MJFTDIO9KINUC7DIH5GU4M4CLP6L2'
-    hh_client_secret = 'IG4JQSGDOL3SRT0N3KT94U5D1NV5CAM03MUC49Q9VNU84VFLJ6INHFN9U9QB3FBC'
+def user_interaction():
+    # Создание экземпляров классов API
+    hh_api = HeadHunterAPI()
+    superjob_api = SuperJobAPI()
 
-    hh_api = HeadHunterAPI(hh_client_id, hh_client_secret)
-    hh_api.connect()
-
-    superjob_token = 'v3.r.137808305.7e48422acf0ab05c530b509558a36a4f025b37a5.55e25d85968842f713673f320a36e63cc5527eeb'
-    superjob_api = SuperJobAPI(superjob_token)
-    superjob_api.connect()
-
-    storage = JSONVacancyStorage('vacancies.json')
+    # Получение вакансий с разных платформ
+    hh_vacancies = hh_api.get_vacancies()
+    superjob_vacancies = superjob_api.get_vacancies()
+    storage = JSONVacancyStorage("vacancies.json")
+    for vacancy in hh_vacancies + superjob_vacancies:
+        storage.save_vacancy(vacancy)
 
     while True:
-        print('1. Поиск вакансий')
-        print('2. Добавить вакансию')
-        print('3. Удалить вакансию')
-        print('4. Получить вакансии с определенными ключевыми словами в описании')
-        print('5. Получить топ N вакансий по зарплате')
-        print('6. Получить вакансии в отсортированном виде')
-        print('7. Выйти')
+        print("Выберите действие:")
+        print("1. Получить топ N вакансий по зарплате")
+        print("2. Получить вакансии в отсортированном виде")
+        print("3. Получить вакансии по ключевым словам")
+        print("4. Выход")
+        choice = input("Введите номер действия: ")
 
-        choice = input('Выберите действие: ')
+        if choice == "1":
+            n = int(input("Введите количество вакансий: "))
+            # Выводим топ N вакансий по зарплате
+            top_vacancies = storage.get_vacancies(lambda v: v.salary and v.salary['from'] is not None)
+            top_vacancies = sorted(top_vacancies, key=lambda v: v.salary['from'], reverse=True)[:n]
+            for vacancy in top_vacancies:
+                print(vacancy)
 
-        if choice == '1':
-            query = input('Введите поисковый запрос: ')
-            hh_vacancies = hh_api.get_vacancies(query)
-            superjob_vacancies = superjob_api.get_vacancies(query)
-            all_vacancies = hh_vacancies + superjob_vacancies
-
-            for vacancy_data in all_vacancies:
-                title = vacancy_data['title']
-                salary = vacancy_data['salary']
-                description = vacancy_data['description']
-                link = vacancy_data['link']
-                vacancy = Vacancy(title, salary, description, link)
-                storage.save_vacancy(vacancy)
-            print('Вакансии сохранены')
-        elif choice == '2':
-            title = input('Введите название вакансии: ')
-            salary = input('Введите зарплату: ')
-            description = input('Введите описание: ')
-            link = input('Введите ссылку на вакансию: ')
-            vacancy = Vacancy(title, salary, description, link)
-            storage.save_vacancy(vacancy)
-            print('Вакансия добавлена')
-        elif choice == '3':
-            title = input('Введите название вакансии: ')
-            salary = input('Введите зарплату: ')
-            description = input('Введите описание: ')
-            link = input('Введите ссылку на вакансию: ')
-            vacancy = Vacancy(title, salary, description, link)
-            if storage.delete_vacancy(vacancy):
-                print('Вакансия удалена')
-            else:
-                print('Вакансия не найдена')
-        elif choice == '4':
-            keyword = input('Введите ключевое слово для поиска: ')
-            vacancies = storage.get_vacancies(description=keyword)
+        elif choice == "2":
+            # Выводим вакансии в отсортированном виде
+            vacancies = storage.get_vacancies(lambda v: True)
+            vacancies = sorted(vacancies, key=lambda v: v.profession)
             for vacancy in vacancies:
                 print(vacancy)
-        elif choice == '5':
-            n = int(input('Введите количество вакансий: '))
-            vacancies = storage.get_vacancies()
-            vacancies.sort(key=lambda v: v.salary, reverse=True)
-            for i, vacancy in enumerate(vacancies[:n]):
-                print(f'{i + 1}. {vacancy}')
-        elif choice == '6':
-            vacancies = storage.get_vacancies()
-            vacancies.sort(key=lambda v: v.salary, reverse=True)
-            for vacancy in vacancies:
+
+
+        elif choice == "3":
+            keywords = input("Введите ключевые слова через запятую: ")
+            # Выводим вакансии, содержащие указанные ключевые слова
+            keywords = [keyword.strip().lower() for keyword in keywords.split(',')]
+            matching_vacancies = storage.get_vacancies(
+                lambda v: any(keyword in v.description.lower() for keyword in keywords))
+            for vacancy in matching_vacancies:
                 print(vacancy)
-        elif choice == '7':
+
+        elif choice == "4":
             break
-        else:
-            print('Неверный выбор')
 
-# if __name__ == '__main__':
-#     storage = JSONVacancyStorage('vacancies.json')
-#     interact()
+        else:
+            print("Некорректный выбор. Пожалуйста, выберите существующую опцию.")
+
+
+user_interaction()

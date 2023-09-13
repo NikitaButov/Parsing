@@ -1,27 +1,40 @@
 import requests
 
 from jobsite import JobSiteAPI
+from vacancy import Vacancy
 
 
 class SuperJobAPI(JobSiteAPI):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self):
+        self.api_key = 'v3.r.137808305.7e48422acf0ab05c530b509558a36a4f025b37a5' \
+                       '.55e25d85968842f713673f320a36e63cc5527eeb'
 
-    def connect(self):
-        print('Подключено к API SuperJob')
-
-    def get_vacancies(self, query):
+    def get_vacancies(self):
         url = 'https://api.superjob.ru/2.0/vacancies'
         headers = {
-            'X-Api-App-Id': self.token
+            'X-Api-App-Id': self.api_key
         }
-        params = {
-            'keyword': query,
-            'town': 4  # Значение 4 соответствует Москве
+        payload = {
+            'text': "python",
+            'page': 0,
         }
-        response = requests.get(url, headers=headers, params=params)
-        if response.status_code == 200:
-            vacancies = response.json()['objects']
-            return vacancies
-        else:
-            return []
+
+        response = requests.get(url, params=payload, headers=headers)
+        js_data = response.json()
+        vacancies = []
+        for line in js_data['objects']:
+            link = line['link']
+            profession = line['profession']
+            salary = {
+                'from': line['payment_from'],
+                'to': line['payment_to'],
+                'currency': line['currency']
+            }
+            description = line['vacancyRichText']
+            # description = description.replace('<br />', '')
+            # description = description.replace('<ul><li><p>', '- ')
+            # description = description.replace('</p><p>', '\n')
+            # description = description.replace('</p></li></ul>', '')
+            vec = Vacancy(profession, salary, link, description)
+            vacancies.append(vec)
+        return vacancies
