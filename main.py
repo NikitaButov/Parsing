@@ -4,6 +4,7 @@ from vacancy import JSONVacancyStorage, Vacancy
 
 
 def user_interaction():
+    """Функция взаимодействия с пользователем через терминал"""
     # Создание экземпляров классов API
     hh_api = HeadHunterAPI()
     superjob_api = SuperJobAPI()

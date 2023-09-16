@@ -4,6 +4,15 @@ from abc import abstractmethod, ABC
 
 class Vacancy:
     def __init__(self, profession, salary, link, description):
+        """
+                Класс, представляющий вакансию
+
+                Args:
+                    profession (str): Название профессии
+                    salary (dict): Информация о зарплате
+                    link (str): Ссылка на вакансию
+                    description (str): Описание вакансии
+                """
         self.profession = profession
         self.salary = salary
         self.description = description
@@ -17,6 +26,9 @@ class Vacancy:
         currency = self.salary.get('currency', '')
 
         if from_value and to_value:
+            """
+                   Форматирование информации о зарплате
+                   """
             salary_range = f"От {from_value} до {to_value} {currency}"
         elif from_value:
             salary_range = f"От {from_value} {currency}"
@@ -46,15 +58,24 @@ class VacancyStorage(ABC):
 
 
 class JSONVacancyStorage(VacancyStorage):
+    """
+            Хранилище вакансий в формате JSON
+            """
     def __init__(self, file_name):
         self.file_name = file_name
 
     def save_vacancy(self, vacancy):
+        """
+        Сохраняет вакансию в формате JSON
+        """
         with open(self.file_name, 'a', encoding="utf-8") as file:
             json.dump(vars(vacancy), file, ensure_ascii=False)
             file.write('\n')
 
     def get_vacancies(self, criteria):
+        """
+                Возвращает список вакансий, удовлетворяющих заданным критериям
+                """
         with open(self.file_name, 'r', encoding="utf-8") as file:
             vacancies = []
             for line in file:

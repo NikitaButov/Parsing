@@ -5,10 +5,16 @@ from vacancy import Vacancy
 
 
 class HeadHunterAPI(JobSiteAPI):
+    """
+           Класс по получению вакансий с сайта HeadHunter.
+           """
     def __init__(self):
         super().__init__()
 
     def get_vacancies(self):
+        """
+        Поключение к сайти и копирование вакансий с сайта
+        """
         payload = {
             'text': "python",
             'page': 0,
